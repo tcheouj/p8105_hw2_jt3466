@@ -192,8 +192,8 @@ Some comments on the table:
 - Season 7 was a close competition but Candice Brown just got 1 more star baker than others with 2 star bakers. 
 - Season 8 was a bit of a tossup, since Steven Carter-Bailey won `r nrow(filter(stars_and_winners, last_name == "Carter-Bailey" & result == "STAR BAKER" & series == 8))` star bakers and Sophie Faldo won `r nrow(filter(stars_and_winners, last_name == "Faldo" & result == "STAR BAKER" & series == 8))`.
 - Season 9 was also a close competition, with Rahul Mandal tied for the most star bakers with `r nrow(filter(stars_and_winners, last_name == "Mandal" & result == "STAR BAKER" & series == 9))`, along with Kim-Joy Hewlett with `r nrow(filter(stars_and_winners, last_name == "Hewlett" & result == "STAR BAKER" & series == 9))`, and Ruby Bhogal with
-`r nrow(filter(stars_and_winners, last_name == "Bhogal" & result == "STAR BAKER" & series == 9))`
-- Season 10 was a huge upset, as David Atherton ultimately won without any star bakers, while Steph Blackwell by far won the most star bakers with `r nrow(filter(stars_and_winners, last_name == "Blackwell" & result == "STAR BAKER" & series == 10))`
+`r nrow(filter(stars_and_winners, last_name == "Bhogal" & result == "STAR BAKER" & series == 9))`.
+- Season 10 was a huge upset, as David Atherton ultimately won without any star bakers, while Steph Blackwell by far won the most star bakers with `r nrow(filter(stars_and_winners, last_name == "Blackwell" & result == "STAR BAKER" & series == 10))`.
 
 For the `viewers` data, the names have been cleaned with `clean_names`, and the data was pivoted to longer format, turning each of the `series` variables into a separate row like the other datasets. Rows with `NA` for `viewers` are omitted for episodes that didn't exist, e.g. S1E7. The `series` data is mutated to `double` type to match the other `series` variables, `series` and `episode` variables are moved to be the first two variables, and then all the observations are sorted by `series` then `episode`. 
 
