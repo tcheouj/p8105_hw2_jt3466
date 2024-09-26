@@ -1,0 +1,221 @@
+---
+title: "p8105_hw2_jt3466"
+author: "Johnstone Tcheou"
+date: "2024-09-24"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(readxl)
+```
+
+# Question 1 
+
+This code reads in the NYC Transit Subway data, cleans the variable names, and retains only the needed variables - `line`, `station_name`, `station_latitude`, `station_longitude`, `route1:11`, `entry`, `vending`, `entrance_type`, and `ada`. In order to pivot the data to a longer format, all route variables need to be the same variable type, so they are converted to character type. Afterwards, all rows with `NA` in in subway lines are dropped, since not all stations have 11 routes. The `entry` variable is then converted from character to logical type. `vending` is also converted from character to logical for a later question.
+
+```{r q1}
+subway <- read_csv("data/NYC_Transit_Subway_Entrance_And_Exit_Data.csv") |>
+  janitor::clean_names() |>
+  select(
+    station_name, 
+    division, 
+    station_latitude, 
+    station_longitude, 
+    route1:route11, 
+    entry, 
+    vending, 
+    entrance_type, 
+    ada
+  ) |>
+  mutate(
+    route8 = as.character(route8),
+    route9 = as.character(route9),
+    route10 = as.character(route10),
+    route11 = as.character(route11)
+  ) |>
+  pivot_longer(
+    cols = route1:route11, 
+    names_to = "route",
+    names_prefix = "route",
+    values_to = "subway_line"
+  ) |> 
+  drop_na(subway_line) |>
+  mutate(
+    entry = case_match(
+      entry, 
+      "YES" ~ TRUE,
+      "NO" ~ FALSE
+    ), 
+    vending = case_match(
+      vending, 
+      "YES" ~ TRUE,
+      "NO" ~ FALSE
+    )
+  )
+```
+
+## How many distinct stations are there?
+
+There are `r nrow(distinct(subway, station_name))` distinct stations. 
+
+## How many stations are ADA compliant?
+
+`r sum(pull(subway, ada))` stations are ADA compliant.
+
+## What proportion of station entrances/exits without vending allow entrance?
+
+Of the `r nrow(filter(subway, vending == FALSE))` stations without vending, `r (nrow(filter(subway, vending == FALSE & entry == TRUE))/nrow(filter(subway, vending == FALSE)))*100`% of them allow  entrance.
+
+## How many distinct stations serve the A train?
+
+`r nrow(distinct(filter(subway, subway_line == "A"), station_name))` distinct stations serve the A train.
+
+## Of the stations that serve the A train, how many are ADA compliant?
+
+Of the `r nrow(distinct(filter(subway, subway_line == "A"), station_name))` stations that serve the A train, `r nrow(distinct(filter(subway, subway_line == "A" & ada == TRUE), station_name))` stations are ADA compliant.
+
+# Question 2
+
+This code chunk imports the corresponding cell ranges and sheets for the 3 robots, `mr_trash`, `prof_trash`, and `gwynnda`. All dataframes are read in with `read_excel`, had names cleaned using `clean_names`. A variable, `robot`, was created for all dataframes to clearly show which rows belong to which robot. In order to bind rows, the `year` variable from the `mr_trash` dataframe needed to be explicitly coerced to `double` type to match the other `year` variables from the other dataframes. 
+
+```{r q2}
+mr_trash <- read_excel("data/202309 Trash Wheel Collection Data.xlsx", range = "A2:N586", sheet = "Mr. Trash Wheel") |>
+  janitor::clean_names() |>
+  mutate(
+    sports_balls = as.integer(round(sports_balls, digits = 0)),
+    year = as.double(year),
+    robot = "Mr. Trash Wheel"
+  )
+
+prof_trash <- read_excel("data/202309 Trash Wheel Collection Data.xlsx", range = "A2:M108", sheet = "Professor Trash Wheel") |>
+  janitor::clean_names() |>
+  mutate(
+    robot = "Professor Trash Wheel"
+  )
+
+gwynnda <- read_excel("data/202309 Trash Wheel Collection Data.xlsx", range = "A2:L157", sheet = "Gwynnda Trash Wheel") |>
+  janitor::clean_names() |>
+  mutate(
+    robot = "Gwynnda"
+  )
+
+trash_wheels <- bind_rows(mr_trash, prof_trash, gwynnda)
+
+summary(trash_wheels)
+```
+
+The dataframe `trash_wheels` contains observations for all 3 robots - Mr. Trash Wheel, Professor Trash Wheel, and Gwynnda. The number of observations in the `trash_wheels` dataframe is `r nrow(trash_wheels)`. Key variables include the `dumpster` number, the `month`, and `year` of the `date`, the total weight in tons collected for that time point in `weight_tons` (e.g. the average weight collected from all robots is `r mean(pull(trash_wheels,weight_tons))` tons) and the total volume of cubic yards of trash collected for that time point in `volume_cubic_yards`. More detailed information on the amount of types of garbage collected for each time point is offered for `plastic_bottles` (e.g. the total plastic bottles collected across all robots and all time points is `r sum(pull(trash_wheels, plastic_bottles), na.rm = TRUE)`), `polystyrene`, `cigarette_butts`, `glass_bottles`, `plastic_bags`, `wrappers`, and `sports_balls`. The total amount of homes powered by the collected trash is available in `homes_powered`. As mentioned earlier, the `robot` variable designates what robot provided the data for that observation. 
+
+## What was the total weight of trash collected by Professor Trash Wheel?
+
+Professor Trash Wheel collected `r sum(pull(filter(trash_wheels, robot == "Professor Trash Wheel"), weight_tons))` tons of trash.
+
+## What was the total number of cigarettes butts collected by Gwynnda in June 2022?
+
+Gwynnda collected `r sum(pull(filter(trash_wheels, robot == "Gwynnda" & year == 2022 & month == "June"), cigarette_butts))` cigarette butts in June 2022.
+
+# Question 3
+
+`results` and `bakes` are in long format already, but all the other files need to be pivoted to long format by pivoting the `series` variables to be their own observations. The `series` variable after pivoting is a character type, so we need to convert it to double. Lastly, all datasets are sorted by `series` first and then `episode` afterwards. Additionally, the `results` file also has some headers and the data doesn't start until the 3rd row. Therefore, we need the `skip=2` option. For later joining, the `baker_name` variable in `bakers` is separated into a variable for the baker's first and last name, called `baker` and `baker_last_name`, respectively. Rows with `NA` in the `technical` or `result` variable for a given `series`/`episode` combination indicate they were eliminated in the prior episode, so these rows are omitted.
+
+```{r q3 wrangling}
+
+bakers <- read_csv("data/bakers.csv") |>
+  janitor::clean_names() |>
+  arrange(series) |>
+  select(series, everything()) |>
+  separate(baker_name, into = c("baker", "last_name"), sep = " ") |> 
+  arrange(series, baker)
+
+bakes <- read_csv("data/bakes.csv") |>
+  janitor::clean_names() |>
+  arrange(series, episode, baker)
+
+results <- read_csv("data/results.csv", skip=2) |>
+  janitor::clean_names() |>
+  filter(!is.na(result)) |>
+  arrange(series, episode)
+
+summary(bakers)
+summary(bakes)
+summary(results)
+
+```
+To check completeness of each dataset, `anti_joins` are conducted between all the datasets.
+
+```{r check_completeness}
+
+
+```
+These datasets can all be joined on `series` and `baker` (with `episode` sometimes for extra assurance). `gb_bakers` is created by doing a left join on `bakers` with `bakes` first by `series` and `baker` as composite primary keys. Then, `gb_bakers` is combined with `results` on `series`, `episode`, and `baker` via a left join. Drop the `baker`-prefix from variables to simplify their names, like `baker_age`. Variables are first ordered by `series` and `episode`, then the baker names, and their `result`, followed by more `baker`-related information variables. The final dataset is then saved as a .csv in the `data` subfolder, called `gb_bakers_data.csv`. 
+
+```{r joins}
+gb_bakers <- left_join(results, bakers, by = c("series", "baker")) |>
+  left_join(bakes, by = c("series", "episode", "baker")) |>
+  mutate(
+    age = baker_age,
+    occupation = baker_occupation
+  ) |>
+  select(
+    series,
+    episode,
+    baker,
+    last_name, 
+    result,
+    technical,
+    everything()
+  ) 
+
+write_csv(gb_bakers, "data/gb_bakers_data.csv")
+```
+
+From this final dataset, to get a table of star baker or winners from seasons 5-10, `filter` the rows accordingly, where `series` is in `5:10` and `result` is either `WINNER` or `STAR BAKER`. Sort the table by `series` and `episode` for readability. 
+
+```{r table}
+stars_and_winners <- gb_bakers |>
+  filter(
+    (series %in% 5:10 & (result == "WINNER" | result == "STAR BAKER"))
+  ) |>
+  arrange(
+    series,
+    baker
+  )
+
+```
+
+Some comments on the table:
+
+- Season 5, Richard Burr got star baker `r nrow(filter(stars_and_winners, last_name == "Burr" & result == "STAR BAKER" & series == 5))`, yet Nancy Birtwhistle won the whole series, having only gotten star baker `r nrow(filter(stars_and_winners, last_name == "Birtwhistle" & result == "STAR BAKER" & series == 5))` time prior, which was a surprise.
+- Season 6 was a tossup since Nadiya Hussain won `r nrow(filter(stars_and_winners, last_name == "Hussain" & result == "STAR BAKER" & series == 6))` star bakers, as did Ian Cumming.
+- Season 7 was a close competition but Candice Brown just got 1 more star baker than others with 2 star bakers. 
+- Season 8 was a bit of a tossup, since Steven Carter-Bailey won `r nrow(filter(stars_and_winners, last_name == "Carter-Bailey" & result == "STAR BAKER" & series == 8))` star bakers and Sophie Faldo won `r nrow(filter(stars_and_winners, last_name == "Faldo" & result == "STAR BAKER" & series == 8))`.
+- Season 9 was also a close competition, with Rahul Mandal tied for the most star bakers with `r nrow(filter(stars_and_winners, last_name == "Mandal" & result == "STAR BAKER" & series == 9))`, along with Kim-Joy Hewlett with `r nrow(filter(stars_and_winners, last_name == "Hewlett" & result == "STAR BAKER" & series == 9))`, and Ruby Bhogal with
+`r nrow(filter(stars_and_winners, last_name == "Bhogal" & result == "STAR BAKER" & series == 9))`
+- Season 10 was a huge upset, as David Atherton ultimately won without any star bakers, while Steph Blackwell by far won the most star bakers with `r nrow(filter(stars_and_winners, last_name == "Blackwell" & result == "STAR BAKER" & series == 10))`
+
+For the `viewers` data, the names have been cleaned with `clean_names`, and the data was pivoted to longer format, turning each of the `series` variables into a separate row like the other datasets. Rows with `NA` for `viewers` are omitted for episodes that didn't exist, e.g. S1E7. The `series` data is mutated to `double` type to match the other `series` variables, `series` and `episode` variables are moved to be the first two variables, and then all the observations are sorted by `series` then `episode`. 
+
+```{r viewers}
+viewers <- read_csv("data/viewers.csv") |>
+  janitor::clean_names() |>
+  pivot_longer(
+    cols = series_1:series_10,
+    names_to = "series",
+    names_prefix = "series_",
+    values_to = "viewers"
+  ) |>
+  filter(!is.na(viewers)) |>
+  mutate( 
+    series = as.double(series) 
+  ) |>
+  select(
+    series, episode, everything()
+  ) |>
+  arrange(series, episode)
+
+head(viewers, n = 10)
+```
+
+The average viewership in season 1 was `r mean(pull(filter(viewers, series == 1), viewers))` viewers. The average viewership in season 5 was `r mean(pull(filter(viewers, series == 5), viewers))` viewers.
