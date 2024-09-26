@@ -91,15 +91,11 @@ mr_trash <- read_excel("data/202309 Trash Wheel Collection Data.xlsx", range = "
 
 prof_trash <- read_excel("data/202309 Trash Wheel Collection Data.xlsx", range = "A2:M108", sheet = "Professor Trash Wheel") |>
   janitor::clean_names() |>
-  mutate(
-    robot = "Professor Trash Wheel"
-  )
+  mutate(robot = "Professor Trash Wheel")
 
 gwynnda <- read_excel("data/202309 Trash Wheel Collection Data.xlsx", range = "A2:L157", sheet = "Gwynnda Trash Wheel") |>
   janitor::clean_names() |>
-  mutate(
-    robot = "Gwynnda"
-  )
+  mutate(robot = "Gwynnda")
 
 trash_wheels <- bind_rows(mr_trash, prof_trash, gwynnda)
 
@@ -178,10 +174,7 @@ stars_and_winners <- gb_bakers |>
   filter(
     (series %in% 5:10 & (result == "WINNER" | result == "STAR BAKER"))
   ) |>
-  arrange(
-    series,
-    baker
-  )
+  arrange(series,baker)
 
 ```
 
