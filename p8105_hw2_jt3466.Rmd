@@ -142,8 +142,9 @@ summary(results)
 To check completeness of each dataset, `anti_joins` are conducted between all the datasets.
 
 ```{r check_completeness}
-
-
+anti_join(bakers, bakes)
+anti_join(bakes, results)
+anti_join(bakers, results)
 ```
 These datasets can all be joined on `series` and `baker` (with `episode` sometimes for extra assurance). `gb_bakers` is created by doing a left join on `bakers` with `bakes` first by `series` and `baker` as composite primary keys. Then, `gb_bakers` is combined with `results` on `series`, `episode`, and `baker` via a left join. Drop the `baker`-prefix from variables to simplify their names, like `baker_age`. Variables are first ordered by `series` and `episode`, then the baker names, and their `result`, followed by more `baker`-related information variables. The final dataset is then saved as a .csv in the `data` subfolder, called `gb_bakers_data.csv`. 
 
@@ -174,7 +175,9 @@ stars_and_winners <- gb_bakers |>
   filter(
     (series %in% 5:10 & (result == "WINNER" | result == "STAR BAKER"))
   ) |>
-  arrange(series,baker)
+  arrange(series,baker) 
+
+knitr::kable(stars_and_winners, format = "html")
 
 ```
 
