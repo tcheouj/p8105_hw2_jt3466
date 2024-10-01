@@ -81,7 +81,7 @@ Of the `r nrow(distinct(filter(subway, subway_line == "A"), station_name))` stat
 This code chunk imports the corresponding cell ranges and sheets for the 3 robots, `mr_trash`, `prof_trash`, and `gwynnda`. All dataframes are read in with `read_excel`, had names cleaned using `clean_names`. A variable, `robot`, was created for all dataframes to clearly show which rows belong to which robot. In order to bind rows, the `year` variable from the `mr_trash` dataframe needed to be explicitly coerced to `double` type to match the other `year` variables from the other dataframes. 
 
 ```{r q2}
-mr_trash <- read_excel("data/202309 Trash Wheel Collection Data.xlsx", range = "A2:N586", sheet = "Mr. Trash Wheel") |>
+mr_trash <- read_excel("data/202409 Trash Wheel Collection Data.xlsx", range = "A2:N653", sheet = "Mr. Trash Wheel") |>
   janitor::clean_names() |>
   mutate(
     sports_balls = as.integer(round(sports_balls, digits = 0)),
@@ -89,11 +89,11 @@ mr_trash <- read_excel("data/202309 Trash Wheel Collection Data.xlsx", range = "
     robot = "Mr. Trash Wheel"
   )
 
-prof_trash <- read_excel("data/202309 Trash Wheel Collection Data.xlsx", range = "A2:M108", sheet = "Professor Trash Wheel") |>
+prof_trash <- read_excel("data/202409 Trash Wheel Collection Data.xlsx", range = "A2:M120", sheet = "Professor Trash Wheel") |>
   janitor::clean_names() |>
   mutate(robot = "Professor Trash Wheel")
 
-gwynnda <- read_excel("data/202309 Trash Wheel Collection Data.xlsx", range = "A2:L157", sheet = "Gwynnda Trash Wheel") |>
+gwynnda <- read_excel("data/202409 Trash Wheel Collection Data.xlsx", range = "A2:L265", sheet = "Gwynnda Trash Wheel") |>
   janitor::clean_names() |>
   mutate(robot = "Gwynnda")
 
