@@ -152,7 +152,7 @@ summary(results)
 ```
 To check completeness of each dataset, `anti_joins` are conducted between all the datasets. In `bakes`, there is a `baker` in season 2 with the name `"Jo"`, which should be `Jo` without the quotation marks, corresponding to `Jo Wheatley`. Hence, why the `anti_join` for `bakers` and `results` shows `Jo Wheatley` as the one row not missing and appearing in the `anti_join` for the `bakers` and `bakes` tables as well. There is a `Joanne` in the `results` table, which may be the missing `Jo Wheatley`. 
 
-The code chunk below also changes the `"Jo"` entries in `bakes` to be `Jo` and `Joanne` entries in `results` to `Jo` so that all the rows can be matched. Then, the `anti_join`s are run again to ensure this has been fixed.
+The code chunk below also changes the `"Jo"` entries in `bakes` to be `Jo` and `Joanne` entries in `results` to `Jo` so that all the rows can be matched. Then, the `anti_join`s for the `bakes` and `results`, and `bakers` and `results` dataframes are run again to ensure this has been fixed and Jo Wheatley's information across the datasets has been successfully merged. These `anti_join`s should then print no observations, as shown below. 
 
 In addition, the `anti_join` for `bakers` and `bakes` has rows from season 9 and 10, as the `bakes` dataset is missing data from those seasons. It stops at season 8. This is worth noting for later review.
 
@@ -179,13 +179,10 @@ results <- results |>
     )
   )
 
-anti_join(bakers, bakes)
 anti_join(bakes, results)
 anti_join(bakers, results)
 ```
 These datasets can all be joined on `series` and `baker` (with `episode` sometimes for extra assurance). `gb_bakers` is created by doing a left join on `bakers` with `bakes` first by `series` and `baker` as composite primary keys. Then, `gb_bakers` is combined with `results` on `series`, `episode`, and `baker` via a left join. Drop the `baker`-prefix from variables to simplify their names, like `baker_age`. Variables are first ordered by `series` and `episode`, then the baker names, and their `result`, followed by more `baker`-related information variables. The final dataset is then saved as a .csv in the `data` subfolder, called `gb_bakers_data.csv`. 
-
-Worth noting, the baker `Joanne` has `NA`s throughout, as her corresponding information did not join as she may be named `Jo` in the `bakers` table and `"Jo"` in the `bakes` table. 
 
 ```{r joins}
 gb_bakers <- left_join(results, bakers, by = c("series", "baker")) |>
@@ -214,7 +211,7 @@ stars_and_winners <- gb_bakers |>
   filter(
     (series %in% 5:10 & (result == "WINNER" | result == "STAR BAKER"))
   ) |>
-  arrange(series,baker) 
+  arrange(series, episode) 
 
 knitr::kable(stars_and_winners, format = "html")
 
